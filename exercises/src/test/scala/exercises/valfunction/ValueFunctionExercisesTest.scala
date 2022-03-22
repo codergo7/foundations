@@ -11,15 +11,53 @@ class ValueFunctionExercisesTest extends AnyFunSuite with ScalaCheckDrivenProper
   /////////////////////////////////////////////////////
 
   // replace `ignore` by `test` to enable the test
-  ignore("selectDigits examples") {
+  test("selectDigits examples") {
     assert(selectDigits("hello4world-80") == "480")
     assert(selectDigits("welcome") == "")
   }
 
   // replace `ignore` by `test` to enable the test
-  ignore("selectDigits length is smaller") {
+  test("selectDigits length is smaller") {
     forAll { (text: String) =>
       assert(selectDigits(text).length <= text.length)
+    }
+  }
+
+  test("selectDigits only returns digits") {
+    forAll { (text: String) =>
+      selectDigits(text).foreach(c => assert(c.isDigit))
+    }
+  }
+
+  test("secret example") {
+    forAll { (text: String) =>
+      assert(secret("Hello") == "*****")
+    }
+  }
+
+  test("secret PBT") {
+    forAll { (text: String) =>
+      val once = secret(text)
+      val twice = secret(secret(text))
+      assert(once == twice)
+    }
+  }
+
+  test("isValidUsername") {
+    forAll { (username: String) =>
+      assert(isValidUsername(username.toLowerCase) == isValidUsername (username.toUpperCase))
+    }
+  }
+
+  test("Point isPositive"){
+    forAll{ (x:Int, y:Int, z:Int) =>
+      assert(Point(x.max(0), y.max(0), z.max(0)).isPositive)
+    }
+  }
+
+  test("Point forAll"){
+    forAll{(x: Int, y: Int, z: Int, predicate: Int => Boolean) =>
+      assert(Point(x, y, z) .forAll(predicate) == List(x,y,z).forall(predicate))
     }
   }
 
