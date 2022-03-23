@@ -1,8 +1,13 @@
 package exercises.generic
 
 import exercises.generic.GenericFunctionExercises._
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import scala.util.Try
 
 class GenericFunctionExercisesTest extends AnyFunSuite with ScalaCheckDrivenPropertyChecks {
 
@@ -80,20 +85,61 @@ class GenericFunctionExercisesTest extends AnyFunSuite with ScalaCheckDrivenProp
     //assert(isPositive.flip(-5) == true)
   }
 
-  test("Predicate isValidUser"){
+  test("Predicate isValidUser") {
     assert(isValidUser(User("John", 20)) == true)
     assert(isValidUser(User("John", 17)) == false)
     assert(isValidUser(User("john", 20)) == false)
-    assert(isValidUser(User("x"   , 23)) == false)
+    assert(isValidUser(User("x", 23)) == false)
   }
 
   ////////////////////////////
   // Exercise 3: JsonDecoder
   ////////////////////////////
 
-  test("JsonDecoder UserId") {}
+  test("JsonDecoder UserId") {
 
-  test("JsonDecoder LocalDate") {}
+    assert(userIdDecoder.decode("1234") == UserId(1234))
+    assert(userIdDecoder.decode("-7") == UserId(-7))
+    assert(Try(userIdDecoder.decode("hello")).isFailure)
+  }
+
+  test("JsonDecoder UserId round-trip ") {
+
+    forAll { (number: Int) =>
+      val json = number.toString
+      assert(userIdDecoder.decode(json) == UserId(number))
+    }
+  }
+
+  test("JsonDecoder LocalDate") {
+
+    assert(localDateDecoder.decode("\"2020-03-26\"") == LocalDate.of(2020, 3, 26))
+    assert(Try(localDateDecoder.decode("2020-03-26")).isFailure)
+    assert(Try(localDateDecoder.decode("hello")).isFailure)
+  }
+
+  test("JsonDecoder LocalDate round-trip") {
+    forAll(genLocalDate){(localDate: LocalDate) =>
+      val json = "\"" + DateTimeFormatter.ISO_LOCAL_DATE.format(localDate) + "\""
+      assert(localDateDecoder.decode(json) ==localDate)
+    }
+    /*
+    forAll {(localDate: LocalDate) =>
+      val json = "\"" + DateTimeFormatter.ISO_LOCAL_DATE.format(localDate) + "\""
+      assert(localDateDecoder.decode(json) ==localDate)
+    }
+     */
+  }
+
+  val genLocalDate: Gen[LocalDate] =
+    Gen
+      .choose(LocalDate.MIN.toEpochDay,LocalDate.MAX.toEpochDay)
+      .map(LocalDate.ofEpochDay)
+
+  //LocalDate.ofEpochDay(5)
+
+  implicit val arbitraryLocalDate: Arbitrary[LocalDate] =
+    Arbitrary(genLocalDate)
 
   test("JsonDecoder weirdLocalDateDecoder") {}
 
